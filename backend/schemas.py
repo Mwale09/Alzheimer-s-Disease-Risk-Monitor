@@ -1,0 +1,26 @@
+from pydantic import BaseModel
+from typing import List, Optional
+
+class GeneticVariant(BaseModel):
+    variant_id: str
+    gene: str
+    genotype: str
+    allele_frequency: float
+
+class PatientData(BaseModel):
+    name: str = "Anonymous"
+    age: int
+    gender: str # "Male", "Female"
+    education_level: Optional[int] = 12
+    family_history: bool = False
+    variants: List[GeneticVariant] = []
+
+class PredictionRequest(BaseModel):
+    patient_data: PatientData
+    model_type: str = "XGBoost"
+
+class PredictionResponse(BaseModel):
+    risk_score: float
+    risk_category: str # "Low", "Moderate", "High"
+    shap_values: dict # Feature name -> SHAP value
+    top_contributing_factors: List[dict]

@@ -11,6 +11,7 @@ import {
   Loader2,
   Upload
 } from 'lucide-react';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 import RiskForm from './components/RiskForm';
 import ResultCard from './components/ResultCard';
 import Login from './components/Login';
@@ -21,15 +22,11 @@ import ModelSelection from './components/ModelSelection';
 import Settings from './components/Settings';
 import { getPredictions } from './api';
 
-
-
-
-
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [analysisStep, setAnalysisStep] = useState('entry'); // 'entry', 'preview', 'model_selection', 'result'
-  const [analysisMode, setAnalysisMode] = useState('selection'); // 'selection', 'manual', 'upload'
+  const [analysisStep, setAnalysisStep] = useState('entry');
+  const [analysisMode, setAnalysisMode] = useState('selection');
   const [preparedPatients, setPreparedPatients] = useState([]);
   const [selectedModel, setSelectedModel] = useState('XGBoost');
   const [darkMode, setDarkMode] = useState(true);
@@ -44,14 +41,13 @@ function App() {
   }, []);
 
   React.useEffect(() => {
+    console.log("Current darkMode state:", darkMode);
     if (darkMode) {
-      document.body.style.setProperty('--bg-dark', '#0a0c10');
-      document.body.style.setProperty('--bg-card', '#151921');
-      document.body.style.setProperty('--text-primary', '#f8fafc');
+      document.documentElement.setAttribute('data-theme', 'dark');
+      console.log("Applied theme: dark");
     } else {
-      document.body.style.setProperty('--bg-dark', '#f8fafc');
-      document.body.style.setProperty('--bg-card', '#ffffff');
-      document.body.style.setProperty('--text-primary', '#0f172a');
+      document.documentElement.setAttribute('data-theme', 'light');
+      console.log("Applied theme: light");
     }
   }, [darkMode]);
 
@@ -74,8 +70,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-
-
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -136,10 +130,10 @@ function App() {
     }
   };
 
-
   const navItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'New Analysis', icon: <UserPlus size={20} /> },
+    { name: 'Cohort Analytics', icon: <BrainCircuit size={20} /> }, // New Tab
     { name: 'Reports', icon: <FileText size={20} /> },
     { name: 'Settings', icon: <SettingsIcon size={20} /> },
   ];
@@ -149,31 +143,32 @@ function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-dark)', color: 'white' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-primary)', transition: 'background 0.3s ease' }}>
 
-      {/* Top Navigation Bar */}
+      {/* Top Navigation Bar - Command Center Style */}
       <nav className="glass-card" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '16px 32px',
+        padding: '12px 32px',
         margin: '0',
         borderRadius: '0',
         border: 'none',
         borderBottom: '1px solid var(--glass-border)',
         position: 'sticky',
         top: 0,
-        zIndex: 100
+        zIndex: 100,
+        background: 'var(--bg-card)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, var(--primary), var(--accent))', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--glow-primary)' }}>
             <BrainCircuit color="white" size={24} />
           </div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em' }}>AD Predict <span style={{ opacity: 0.5, fontWeight: 400 }}>Pro</span></h1>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>AD Predict <span style={{ opacity: 0.5, fontWeight: 400 }}>Pro</span></h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {['Dashboard', 'New Analysis', 'Settings'].map((tab) => (
+        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+          {['Dashboard', 'New Analysis', 'Cohort Analytics', 'Settings'].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -189,45 +184,53 @@ function App() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '10px 20px',
+                padding: '8px 16px',
                 borderRadius: '8px',
                 border: 'none',
-                background: activeTab === tab ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                color: activeTab === tab ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                background: activeTab === tab ? 'var(--primary)' : 'transparent',
+                color: activeTab === tab ? 'white' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                fontWeight: activeTab === tab ? 600 : 400
+                fontWeight: activeTab === tab ? 600 : 500,
+                fontSize: '0.9rem'
               }}
             >
-              {tab === 'Dashboard' && <LayoutDashboard size={18} />}
-              {tab === 'New Analysis' && <Activity size={18} />}
-              {tab === 'Settings' && <SettingsIcon size={18} />}
+              {tab === 'Dashboard' && <LayoutDashboard size={16} />}
+              {tab === 'New Analysis' && <Activity size={16} />}
+              {tab === 'Cohort Analytics' && <BrainCircuit size={16} />}
+              {tab === 'Settings' && <SettingsIcon size={16} />}
               {tab}
             </button>
           ))}
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="btn-primary"
-          style={{ padding: '8px 16px', fontSize: '0.875rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
-        >
-          Sign Out
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ textAlign: 'right', marginRight: '8px' }}>
+            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Dr. User</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Neurologist</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="btn-primary"
+            style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+          >
+            Sign Out
+          </button>
+        </div>
       </nav>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, padding: '32px', maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
-        <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <main style={{ flex: 1, padding: '40px', maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
+        <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h1 style={{ fontSize: '2rem', marginBottom: '4px' }}>{activeTab}</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Welcome back, Dr. User</p>
+            <h1 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '8px', fontWeight: 700 }}>{activeTab}</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Welcome to your Neuro-Command Center</p>
           </div>
 
           <div style={{ display: 'flex', gap: '16px' }}>
-            <div className="glass-card" style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="glass-card" style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--success)', background: 'rgba(16, 185, 129, 0.1)' }}>
               <ShieldCheck size={18} color="var(--success)" />
-              <span style={{ fontSize: '0.875rem' }}>System Secure</span>
+              <span style={{ fontSize: '0.875rem', color: 'var(--success)', fontWeight: 600 }}>System Secure</span>
             </div>
           </div>
         </header>
@@ -256,7 +259,7 @@ function App() {
                       <h2 style={{ margin: 0 }}>Manual Patient Entry</h2>
                       <button
                         onClick={() => setAnalysisMode('selection')}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontSize: '0.875rem' }}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.875rem' }}
                       >
                         ← Back to Options
                       </button>
@@ -274,7 +277,7 @@ function App() {
                       <h2 style={{ margin: 0 }}>Upload Genotype Data</h2>
                       <button
                         onClick={() => setAnalysisMode('selection')}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontSize: '0.875rem' }}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.875rem' }}
                       >
                         ← Back to Options
                       </button>
@@ -296,8 +299,11 @@ function App() {
                         border: '2px dashed var(--glass-border)',
                         borderRadius: '16px',
                         background: 'rgba(255,255,255,0.01)',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
                       }}
+                      onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--glass-border)'}
                     >
                       <Upload size={48} style={{ marginBottom: '16px', color: 'var(--text-secondary)' }} />
                       <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>Click to select a CSV file</p>
@@ -330,20 +336,13 @@ function App() {
                 <div className="glass-card" style={{ padding: '32px', textAlign: 'center' }}>
                   <h2 style={{ marginBottom: '16px' }}>Analysis Progress</h2>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                    Model: <span style={{ color: 'white', fontWeight: 600 }}>{selectedModel}</span>
+                    Model: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{selectedModel}</span>
                   </p>
 
                   {loading && (
                     <div style={{ padding: '40px' }}>
-                      <Activity size={48} className="spin" style={{ color: 'var(--accent-blue)', marginBottom: '16px' }} />
+                      <Activity size={48} className="spin" style={{ color: 'var(--primary)', marginBottom: '16px' }} />
                       <p>Generating Neuro-Explainability Maps...</p>
-                    </div>
-                  )}
-
-                  {error && (
-                    <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: '8px', border: '1px solid var(--danger)' }}>
-                      {error}
-                      <button onClick={() => setAnalysisStep('model_selection')} style={{ display: 'block', margin: '12px auto', background: 'transparent', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer' }}>Try Again</button>
                     </div>
                   )}
 
@@ -364,19 +363,25 @@ function App() {
                       </button>
                     </div>
                   )}
-                </div>
 
+                  {error && (
+                    <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: '8px', border: '1px solid var(--danger)' }}>
+                      {error}
+                      <button onClick={() => setAnalysisStep('model_selection')} style={{ display: 'block', margin: '12px auto', background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer' }}>Try Again</button>
+                    </div>
+                  )}
+                </div>
                 {result && <ResultCard result={result} />}
               </div>
             )}
           </div>
         )}
 
+        {activeTab === 'Cohort Analytics' && <AnalyticsDashboard />}
+
         {activeTab === 'Settings' && (
           <Settings darkMode={darkMode} toggleTheme={toggleTheme} />
         )}
-
-
 
       </main>
     </div>

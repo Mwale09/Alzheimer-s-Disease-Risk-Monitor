@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Zap, BrainCircuit } from 'lucide-react';
+import { Plus, Trash2, Zap } from 'lucide-react';
 
 const RiskForm = ({ onSubmit, loading }) => {
     const [formData, setFormData] = useState({
@@ -45,7 +45,7 @@ const RiskForm = ({ onSubmit, loading }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }} className="fade-in">
             <div className="form-group">
                 <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Patient Name *</label>
                 <input
@@ -54,7 +54,7 @@ const RiskForm = ({ onSubmit, loading }) => {
                     placeholder="e.g., John Smith"
                     value={formData.name}
                     onChange={handleChange}
-                    style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white' }}
+                    style={{ width: '100%', padding: '12px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-primary)', opacity: 0.8 }}
                 />
             </div>
 
@@ -66,7 +66,7 @@ const RiskForm = ({ onSubmit, loading }) => {
                         name="age"
                         value={formData.age}
                         onChange={handleChange}
-                        style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white' }}
+                        style={{ width: '100%', padding: '12px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-primary)', opacity: 0.8 }}
                     />
                 </div>
                 <div className="form-group">
@@ -75,7 +75,7 @@ const RiskForm = ({ onSubmit, loading }) => {
                         name="gender"
                         value={formData.gender}
                         onChange={handleChange}
-                        style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white' }}
+                        style={{ width: '100%', padding: '12px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-primary)', opacity: 0.8 }}
                     >
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -92,7 +92,7 @@ const RiskForm = ({ onSubmit, loading }) => {
                         name="education_level"
                         value={formData.education_level}
                         onChange={handleChange}
-                        style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white' }}
+                        style={{ width: '100%', padding: '12px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-primary)', opacity: 0.8 }}
                     />
                 </div>
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '28px' }}>
@@ -109,23 +109,23 @@ const RiskForm = ({ onSubmit, loading }) => {
 
             <div style={{ marginTop: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h3 style={{ fontSize: '1.1rem' }}>Genetic Variants</h3>
+                    <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>Genetic Variants</h3>
                     <button
                         type="button"
                         onClick={addVariant}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid var(--accent-blue)', borderRadius: '6px', color: 'var(--accent-blue)', cursor: 'pointer', fontSize: '0.875rem' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid var(--primary)', borderRadius: '6px', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.875rem' }}
                     >
                         <Plus size={16} /> Add Variant
                     </button>
                 </div>
 
                 {formData.variants.map((v, index) => (
-                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 40px', gap: '12px', marginBottom: '12px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px' }}>
-                        <input placeholder="ID" value={v.variant_id} onChange={(e) => handleVariantChange(index, 'variant_id', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'white', padding: '4px' }} />
-                        <input placeholder="Gene" value={v.gene} onChange={(e) => handleVariantChange(index, 'gene', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'white', padding: '4px' }} />
-                        <input placeholder="Genotype" value={v.genotype} onChange={(e) => handleVariantChange(index, 'genotype', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'white', padding: '4px' }} />
-                        <input type="number" step="0.01" placeholder="Freq" value={v.allele_frequency} onChange={(e) => handleVariantChange(index, 'allele_frequency', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'white', padding: '4px' }} />
-                        <button onClick={() => removeVariant(index)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 40px', gap: '12px', marginBottom: '12px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                        <input placeholder="ID" value={v.variant_id} onChange={(e) => handleVariantChange(index, 'variant_id', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px' }} />
+                        <input placeholder="Gene" value={v.gene} onChange={(e) => handleVariantChange(index, 'gene', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px' }} />
+                        <input placeholder="Genotype" value={v.genotype} onChange={(e) => handleVariantChange(index, 'genotype', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px' }} />
+                        <input type="number" step="0.01" placeholder="Freq" value={v.allele_frequency} onChange={(e) => handleVariantChange(index, 'allele_frequency', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px' }} />
+                        <button type="button" onClick={() => removeVariant(index)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={18} /></button>
                     </div>
                 ))}
             </div>

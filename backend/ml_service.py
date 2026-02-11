@@ -53,7 +53,6 @@ class RiskPredictor:
             n_estimators=100, 
             learning_rate=0.1, 
             max_depth=3,
-            use_label_encoder=False,
             eval_metric="logloss"
         )
         self.model.fit(X, y)
@@ -63,8 +62,12 @@ class RiskPredictor:
             self.explainer = shap.TreeExplainer(self.model)
             print("Synthetic model trained and SHAP explainer initialized.")
         except Exception as e:
-            print(f"SHAP initialization failed: {e}")
-            self.explainer = None
+            print(f"SHAP TreeExplainer failed: {e}. Trying generic Explainer...")
+            try:
+                self.explainer = shap.Explainer(self.model)
+            except Exception as e2:
+                 print(f"SHAP initialization failed completely: {e2}")
+                 self.explainer = None
 
     def predict(self, patient_data, model_type="XGBoost"):
         if not self.model:

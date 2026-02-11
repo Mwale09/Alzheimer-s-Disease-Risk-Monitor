@@ -16,11 +16,12 @@ services:
     build: ./frontend
     container_name: ad_frontend
     ports:
-      - "8501:8501"
+      - "5173:5173"
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     environment:
-      - BACKEND_URL=http://backend:8000
+      - VITE_API_URL=http://localhost:8000
     depends_on:
       - backend
-    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+    command: npm run dev -- --host 0.0.0.0

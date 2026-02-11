@@ -17,6 +17,16 @@ export const getPredictions = async (patientData, modelType = "XGBoost") => {
   }
 };
 
+export const getHistory = async () => {
+  try {
+    const response = await api.get('/history');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching history:', error);
+    return []; // Return empty array on failure
+  }
+};
+
 export const checkHealth = async () => {
   try {
     const response = await api.get('/health');

@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Zap } from 'lucide-react';
 const PatientPreview = ({ patients, onBack, onProceed }) => {
     return (
         <div className="glass-card" style={{ padding: '32px', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', background: 'rgba(16, 185, 129, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', background: 'rgba(16, 185, 129, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid var(--success)', opacity: 0.9 }}>
                 <div style={{ background: 'var(--success)', padding: '8px', borderRadius: '50%', color: 'white' }}>
                     <Zap size={20} fill="white" />
                 </div>
@@ -61,7 +61,7 @@ const PatientPreview = ({ patients, onBack, onProceed }) => {
                 <button
                     onClick={onProceed}
                     className="btn-primary"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 32px', background: '#00A19D' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 32px' }}
                 >
                     Proceed to Preprocessing <ArrowRight size={18} />
                 </button>

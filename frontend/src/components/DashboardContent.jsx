@@ -1,7 +1,42 @@
-import React from 'react';
-import { Activity, TrendingUp, FileText, Shield, Zap, ArrowRight, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Activity, TrendingUp, FileText, Shield, Zap, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import { getHistory } from '../api';
 
 const DashboardContent = ({ onStartAnalysis }) => {
+    const [stats, setStats] = useState({
+        total: 0,
+        avgRisk: '--',
+        recent: 0
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const history = await getHistory();
+                if (history && history.length > 0) {
+                    const total = history.length;
+                    // Calculate average risk from scores (formatted as percentage strings like "71.1%")
+                    const avg = (history.reduce((acc, curr) => {
+                        const score = parseFloat(curr.score);
+                        return acc + (isNaN(score) ? 0 : score);
+                    }, 0) / total).toFixed(1) + '%';
+
+                    setStats({
+                        total,
+                        avgRisk: avg,
+                        recent: total // Total reports available
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch dashboard stats", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }} className="fade-in">
             {/* Hero Section - Simplified */}
@@ -74,7 +109,9 @@ const DashboardContent = ({ onStartAnalysis }) => {
                                 Total Analyses
                             </h3>
                         </div>
-                        <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>0</p>
+                        <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {loading ? <Loader2 className="spin" size={24} /> : stats.total}
+                        </p>
                     </div>
 
                     <div className="glass-card" style={{
@@ -92,7 +129,9 @@ const DashboardContent = ({ onStartAnalysis }) => {
                                 Avg Risk Score
                             </h3>
                         </div>
-                        <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>--</p>
+                        <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {loading ? <Loader2 className="spin" size={24} /> : stats.avgRisk}
+                        </p>
                     </div>
 
                     <div className="glass-card" style={{
@@ -107,10 +146,12 @@ const DashboardContent = ({ onStartAnalysis }) => {
                         }}>
                             <FileText size={24} color="var(--accent)" />
                             <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                Recent Reports
+                                Total Reports
                             </h3>
                         </div>
-                        <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>0</p>
+                        <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {loading ? <Loader2 className="spin" size={24} /> : stats.recent}
+                        </p>
                     </div>
                 </div>
             </section>

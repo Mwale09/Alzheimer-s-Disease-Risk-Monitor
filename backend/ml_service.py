@@ -59,12 +59,15 @@ class RiskPredictor:
         
         # Initialize SHAP explainer
         try:
-            self.explainer = shap.TreeExplainer(self.model)
-            print("Synthetic model trained and SHAP explainer initialized.")
+            # For newer XGBoost, passing the booster directly often works better with TreeExplainer
+            self.explainer = shap.TreeExplainer(self.model.get_booster())
+            print("Synthetic model trained and SHAP TreeExplainer initialized with booster.")
         except Exception as e:
             print(f"SHAP TreeExplainer failed: {e}. Trying generic Explainer...")
             try:
-                self.explainer = shap.Explainer(self.model)
+                # Fallback to generic Explainer, passing some data to initialize masker
+                self.explainer = shap.Explainer(self.model.predict, X.head(100))
+                print("SHAP generic Explainer initialized.")
             except Exception as e2:
                  print(f"SHAP initialization failed completely: {e2}")
                  self.explainer = None
@@ -114,11 +117,23 @@ class RiskPredictor:
         
         if self.explainer:
             try:
-                shap_values = self.explainer.shap_values(input_data)
-                sv = shap_values[0] if isinstance(shap_values, list) else shap_values
-                if len(sv.shape) > 1:
+                # Handle different explainer types and output formats
+                if isinstance(self.explainer, shap.TreeExplainer):
+                    shap_values = self.explainer.shap_values(input_data)
+                else:
+                    shap_values = self.explainer(input_data).values
+                
+                # SHAP returns different structures depending on version/model
+                # Usually [samples, features, classes] or [samples, features]
+                sv = shap_values
+                if isinstance(sv, list): # Multi-class output usually
+                    sv = sv[1] if len(sv) > 1 else sv[0]
+                
+                if len(sv.shape) == 3: # [samples, features, classes]
+                    sv = sv[0, :, 1] # First sample, all features, class 1 (positive)
+                elif len(sv.shape) == 2: # [samples, features]
                     sv = sv[0]
-
+                
                 for i, feature in enumerate(self.feature_names):
                     val = float(sv[i])
                     contributions.append({

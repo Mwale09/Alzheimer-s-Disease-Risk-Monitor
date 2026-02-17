@@ -18,6 +18,7 @@ class PatientData(BaseModel):
 class PredictionRequest(BaseModel):
     patient_data: PatientData
     model_type: str = "XGBoost"
+    
 
 class PredictionResponse(BaseModel):
     risk_score: float

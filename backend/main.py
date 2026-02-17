@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware   # ADD THIS
 from sqlalchemy.orm import Session
 from schemas import PredictionRequest, PredictionResponse
 from ml_service import predictor
@@ -9,6 +10,15 @@ import json
 init_db()
 
 app = FastAPI(title="AD Risk Prediction API", version="1.0")
+
+# ADD THIS BLOCK
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 def health_check():

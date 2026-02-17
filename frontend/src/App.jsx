@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   UserPlus,
@@ -9,7 +9,9 @@ import {
   ShieldCheck,
   BrainCircuit,
   Loader2,
-  Upload
+  Upload,
+  ArrowLeft,
+  ArrowRight
 } from 'lucide-react';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import RiskForm from './components/RiskForm';
@@ -32,7 +34,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(true);
 
   // Persistent Auth & Theme
-  React.useEffect(() => {
+  useEffect(() => {
     const savedLogin = localStorage.getItem('isLoggedIn');
     if (savedLogin === 'true') setIsLoggedIn(true);
 
@@ -40,7 +42,7 @@ function App() {
     if (savedTheme === 'light') setDarkMode(false);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("Current darkMode state:", darkMode);
     if (darkMode) {
       document.documentElement.setAttribute('data-theme', 'dark');
@@ -68,7 +70,8 @@ function App() {
   };
 
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(null); // Will hold array of results
+  const [selectedResultIndex, setSelectedResultIndex] = useState(0);
   const [error, setError] = useState(null);
 
   const handleFileUpload = (event) => {
@@ -81,33 +84,55 @@ function App() {
       const lines = text.split('\n');
       const headers = lines[0].split(',').map(h => h.trim());
 
-      const patients = [];
-      // Simple CSV parsing (assuming specific format for demo)
-      // Format: Name,Age,Gender,Education,FamilyHistory,VariantID,Gene,Genotype,AF
-      // Note: Real parsing would need to handle grouping variants by patient
-      // For this demo, we'll assume one line per patient/variant or use a simplified mock parser
-      // capturing the file content but mapping to our demo structure for reliability
-
       console.log("File loaded, rows:", lines.length);
 
-      // MOCK PARSING FOR ROBUSTNESS IN DEMO
-      // In a real app, we'd parse `lines` properly. 
-      // Here, we'll generate data based on the file existence to ensure the flow works.
-      const demoPatients = [
-        {
-          name: 'Uploaded Patient 1', age: 70, gender: 'Female', variants: [
-            { variant_id: 'rs429358', gene: 'APOE', genotype: 'e3/e4', allele_frequency: 0.14 },
-            { variant_id: 'rs2075650', gene: 'TOMM40', genotype: 'A/G', allele_frequency: 0.45 }
-          ]
-        },
-        {
-          name: 'Uploaded Patient 2', age: 65, gender: 'Male', variants: [
-            { variant_id: 'rs11136000', gene: 'CLU', genotype: 'C/C', allele_frequency: 0.38 }
-          ]
+      const csvRows = lines.slice(1);
+      const patientsMap = {};
+
+      csvRows.forEach((row, index) => {
+        if (!row.trim()) return;
+        const cols = row.split(',').map(c => c.trim());
+
+        // Basic validation: need at least Name and Age
+        if (cols.length < 2) {
+          console.warn(`Row ${index + 2} is invalid: too few columns.`);
+          return;
         }
-      ];
-      setPreparedPatients(demoPatients);
-      setAnalysisStep('preview');
+
+        const [name, age, gender, education, familyHistory, variantId, gene, genotype, af] = cols;
+
+        if (!patientsMap[name]) {
+          patientsMap[name] = {
+            name: name || `Patient ${index + 1}`,
+            age: parseInt(age) || 65,
+            gender: gender || 'Unknown',
+            education_level: parseInt(education) || 12,
+            family_history: familyHistory ? (familyHistory.toLowerCase() === 'true' || familyHistory === '1') : false,
+            variants: []
+          };
+        }
+
+        if (variantId || gene) {
+          patientsMap[name].variants.push({
+            variant_id: variantId || 'N/A',
+            gene: gene || 'N/A',
+            genotype: genotype || 'N/A',
+            allele_frequency: parseFloat(af) || 0.0
+          });
+        }
+      });
+
+      const parsedPatients = Object.values(patientsMap);
+      console.log("Parsed patients:", parsedPatients);
+
+      if (parsedPatients.length > 0) {
+        setPreparedPatients(parsedPatients);
+        setAnalysisStep('preview');
+      } else {
+        const msg = 'No valid patient data found in CSV. Please ensure the format matches: Name,Age,Gender,Education,FamilyHistory,VariantID,Gene,Genotype,AF';
+        console.error(msg);
+        setError(msg);
+      }
     };
     reader.readAsText(file);
   };
@@ -116,13 +141,19 @@ function App() {
     setLoading(true);
     setResult(null);
     setError(null);
+    setSelectedResultIndex(0);
     setAnalysisStep('result');
     try {
-      // For now, we only handle the first patient for single prediction
-      // In batch, we'd loop or use a batch endpoint
-      const currentPatient = preparedPatients[0];
-      const data = await getPredictions(currentPatient, modelName);
-      setResult(data);
+      if (preparedPatients.length > 1) {
+        // Batch Prediction
+        const { getBatchPredictions } = await import('./api');
+        const results = await getBatchPredictions(preparedPatients, modelName);
+        setResult(results);
+      } else {
+        // Single Prediction
+        const data = await getPredictions(preparedPatients[0], modelName);
+        setResult([data]); // Store as array for consistency
+      }
     } catch (err) {
       setError('Analysis failed. Please check your connection to the Neuro-Service.');
     } finally {
@@ -346,10 +377,54 @@ function App() {
                     </div>
                   )}
 
-                  {!loading && !error && (
+                  {!loading && !error && result && result.length > 0 && (
                     <div>
                       <ShieldCheck size={48} color="var(--success)" style={{ marginBottom: '16px' }} />
                       <p style={{ color: 'var(--success)', fontWeight: 600 }}>Analysis Complete</p>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                        Processed {result.length} patient(s)
+                      </p>
+
+                      {result.length > 1 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '24px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '10px' }}>
+                          <button
+                            onClick={() => setSelectedResultIndex(prev => Math.max(0, prev - 1))}
+                            disabled={selectedResultIndex === 0}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid var(--glass-border)',
+                              color: selectedResultIndex === 0 ? 'var(--text-secondary)' : 'var(--primary)',
+                              padding: '8px',
+                              borderRadius: '8px',
+                              cursor: selectedResultIndex === 0 ? 'default' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <ArrowLeft size={16} />
+                          </button>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                            {selectedResultIndex + 1} / {result.length}
+                          </span>
+                          <button
+                            onClick={() => setSelectedResultIndex(prev => Math.min(result.length - 1, prev + 1))}
+                            disabled={selectedResultIndex === result.length - 1}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid var(--glass-border)',
+                              color: selectedResultIndex === result.length - 1 ? 'var(--text-secondary)' : 'var(--primary)',
+                              padding: '8px',
+                              borderRadius: '8px',
+                              cursor: selectedResultIndex === result.length - 1 ? 'default' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <ArrowRight size={16} />
+                          </button>
+                        </div>
+                      )}
+
                       <button
                         onClick={() => {
                           setAnalysisStep('entry');
@@ -357,7 +432,7 @@ function App() {
                           setPreparedPatients([]);
                         }}
                         className="btn-primary"
-                        style={{ marginTop: '24px', background: 'transparent', border: '1px solid var(--glass-border)' }}
+                        style={{ background: 'transparent', border: '1px solid var(--glass-border)', width: '100%' }}
                       >
                         New Analysis
                       </button>
@@ -371,7 +446,32 @@ function App() {
                     </div>
                   )}
                 </div>
-                {result && <ResultCard result={result} />}
+                {result && result[selectedResultIndex] && (
+                  <div style={{ animation: 'fade-in 0.5s ease-out' }}>
+                    <div style={{
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '0 8px'
+                    }}>
+                      <div style={{
+                        width: '8px',
+                        height: '24px',
+                        background: 'var(--primary)',
+                        borderRadius: '4px'
+                      }}></div>
+                      <h3 style={{
+                        fontSize: '1.2rem',
+                        margin: 0,
+                        color: 'var(--text-primary)'
+                      }}>
+                        Patient: {result[selectedResultIndex].patient_name}
+                      </h3>
+                    </div>
+                    <ResultCard result={result[selectedResultIndex]} />
+                  </div>
+                )}
               </div>
             )}
           </div>

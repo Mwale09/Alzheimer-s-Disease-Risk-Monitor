@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware   # ADD THIS
 from sqlalchemy.orm import Session
-from schemas import PredictionRequest, PredictionResponse
+from schemas import PredictionRequest, PredictionResponse, BatchPredictionRequest, BatchPredictionResponse
 from ml_service import predictor
 from database import SessionLocal, engine, init_db, get_db, Patient, GeneticVariant, Prediction as PredictionModel
 import json
@@ -26,10 +26,23 @@ def health_check():
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest, db: Session = Depends(get_db)):
+    result = run_single_prediction(request.patient_data, request.model_type, db)
+    return result
+
+@app.post("/predict/batch", response_model=BatchPredictionResponse)
+def predict_batch(request: BatchPredictionRequest, db: Session = Depends(get_db)):
+    results = []
+    for patient_data in request.patients:
+        try:
+            result = run_single_prediction(patient_data, request.model_type, db)
+            results.append(result)
+        except Exception as e:
+            print(f"Error in batch for patient {patient_data.name}: {e}")
+            # Continue with others even if one fails
+    return {"results": results}
+
+def run_single_prediction(data, model_type, db):
     try:
-        data = request.patient_data
-        model_type = request.model_type
-        
         # ML Prediction
         risk_score, category, shap_dict, contributions = predictor.predict(data.dict(), model_type)
         
@@ -66,14 +79,15 @@ def predict(request: PredictionRequest, db: Session = Depends(get_db)):
         db.commit()
         
         return {
+            "patient_name": data.name,
             "risk_score": risk_score,
             "risk_category": category,
-            "shap_values": shap_dict, # Keeping for schema compat, though we use contributions mostly
+            "shap_values": shap_dict,
             "top_contributing_factors": contributions
         }
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise e
 
 @app.get("/history")
 def get_history(db: Session = Depends(get_db)):

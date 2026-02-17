@@ -17,6 +17,19 @@ export const getPredictions = async (patientData, modelType = "XGBoost") => {
   }
 };
 
+export const getBatchPredictions = async (patients, modelType = "XGBoost") => {
+  try {
+    const response = await api.post('/predict/batch', {
+      patients: patients,
+      model_type: modelType
+    });
+    return response.data.results;
+  } catch (error) {
+    console.error('Error fetching batch predictions:', error);
+    throw error;
+  }
+};
+
 export const getHistory = async () => {
   try {
     const response = await api.get('/history');

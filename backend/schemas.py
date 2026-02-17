@@ -21,7 +21,15 @@ class PredictionRequest(BaseModel):
     
 
 class PredictionResponse(BaseModel):
+    patient_name: str = "Anonymous"
     risk_score: float
     risk_category: str # "Low", "Moderate", "High"
     shap_values: dict # Feature name -> SHAP value
     top_contributing_factors: List[dict]
+
+class BatchPredictionRequest(BaseModel):
+    patients: List[PatientData]
+    model_type: str = "XGBoost"
+
+class BatchPredictionResponse(BaseModel):
+    results: List[PredictionResponse]

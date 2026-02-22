@@ -1,40 +1,33 @@
 import React, { useState } from 'react';
-import { ShieldCheck, ArrowRight } from 'lucide-react';
+import { ShieldCheck, ArrowRight, ArrowLeft, Zap } from 'lucide-react';
 
-const ModelSelection = ({ onSelect }) => {
+const ModelSelection = ({ onSelect, onBack }) => {
     const [selectedModel, setSelectedModel] = useState('XGBoost');
 
     const models = [
         {
-            name: 'Random Forest',
-            description: 'Ensemble method using multiple decision trees for robust predictions',
-            metrics: { accuracy: '92.0%', auc: '94.0%', precision: '89%', recall: '88%', f1: '88%', time: '2.3s', specificity: '91%' }
-        },
-        {
             name: 'XGBoost',
-            description: 'Gradient boosting algorithm optimized for speed and performance',
+            description: 'Optimized gradient boosting algorithm. Primary engine for AD Predictor.',
             metrics: { accuracy: '94.0%', auc: '96.0%', precision: '92%', recall: '90%', f1: '91%', time: '3.1s', specificity: '93%' }
-        },
-        {
-            name: 'Deep Neural Network',
-            description: 'Multi-layer perceptron with dropout regularization',
-            metrics: { accuracy: '90.0%', auc: '93.0%', precision: '88%', recall: '87%', f1: '87%', time: '1.2s', specificity: '89%' }
-        },
-        {
-            name: 'Support Vector Machine',
-            description: 'SVM with RBF kernel for non-linear classification',
-            metrics: { accuracy: '88.0%', auc: '91.0%', precision: '86%', recall: '85%', f1: '85%', time: '0.8s', specificity: '87%' }
         }
     ];
 
     return (
         <div className="glass-card" style={{ padding: '40px', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-            <h2 style={{ fontSize: '1.75rem', marginBottom: '8px' }}>Select Machine Learning Model</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Select Analysis Engine</h2>
+                <button
+                    onClick={onBack}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                    <ArrowLeft size={18} /> Back to Preview
+                </button>
+            </div>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '40px' }}>
-                Choose a model for Alzheimer's disease risk prediction. Review performance metrics to make an informed decision.
+                XGBoost is the recommended engine for this dataset based on latest benchmarks.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 600px)', justifyContent: 'center', gap: '32px' }}>
                 {models.map((model) => (
                     <div
                         key={model.name}
@@ -48,7 +41,10 @@ const ModelSelection = ({ onSelect }) => {
                             transition: 'all 0.2s ease'
                         }}
                     >
-                        <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{model.name}</h3>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ fontSize: '1.5rem', margin: 0 }}>{model.name}</h3>
+                            <Zap color="var(--success)" fill="var(--success)" size={24} />
+                        </div>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>{model.description}</p>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
@@ -71,13 +67,13 @@ const ModelSelection = ({ onSelect }) => {
                 ))}
             </div>
 
-            <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'center' }}>
                 <button
                     onClick={() => onSelect(selectedModel)}
                     className="btn-primary"
                     style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 48px', background: '#00A19D' }}
                 >
-                    Confirm Model & Run Analysis <ArrowRight size={18} />
+                    Confirm Engine & Run Analysis <ArrowRight size={18} />
                 </button>
             </div>
         </div>

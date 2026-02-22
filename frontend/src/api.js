@@ -50,4 +50,14 @@ export const checkHealth = async () => {
   }
 };
 
+export const getHistoryDetail = async (id) => {
+  try {
+    const response = await api.get(`/history/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching history detail for ID ${id}:`, error);
+    throw error;
+  }
+};
+
 export default api;

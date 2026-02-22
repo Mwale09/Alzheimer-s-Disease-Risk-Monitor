@@ -36,8 +36,8 @@ const Login = ({ onLogin }) => {
                     <BrainCircuit color="white" size={32} />
                 </div>
 
-                <h1 style={{ fontSize: '1.75rem', marginBottom: '8px' }}>Medical Portal</h1>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Enter credentials to access AD Predict</p>
+                <h1 style={{ fontSize: '1.75rem', marginBottom: '8px' }}>AD Predictor</h1>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Enter credentials to access AD Predictor</p>
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ position: 'relative' }}>

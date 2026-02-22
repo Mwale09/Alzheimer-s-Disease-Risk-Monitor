@@ -100,16 +100,11 @@ class RiskPredictor:
         # Here we adjust the risk score slightly for "simulation" of different model behaviors 
         # as requested by the UI design requirements.
         
-        raw_risk = float(self.model.predict_proba(input_data)[0][1])
+        if model_type != "XGBoost":
+            print(f"Bypassing model {model_type}, using XGBoost as requested.")
         
-        if model_type == "Random Forest":
-            risk_score = min(0.99, max(0.01, raw_risk * 1.05))
-        elif model_type == "Deep Neural Network":
-            risk_score = min(0.99, max(0.01, raw_risk * 0.95))
-        elif model_type == "Support Vector Machine":
-            risk_score = min(0.99, max(0.01, raw_risk * 0.98))
-        else: # XGBoost
-            risk_score = raw_risk
+        risk_score = float(self.model.predict_proba(input_data)[0][1])
+        model_type = "XGBoost" # Force label to XGBoost
 
         # SHAP values
         contributions = []

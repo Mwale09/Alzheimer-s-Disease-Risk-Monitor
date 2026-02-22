@@ -99,12 +99,33 @@ def get_history(db: Session = Depends(get_db)):
             "id": p.id,
             "patient_name": patient.name,
             "age": patient.age,
+            "gender": patient.gender,
             "model": p.model_type,
             "risk": p.risk_category,
             "score": f"{p.risk_score*100:.1f}%",
             "date": p.created_at.strftime("%Y-%m-%d %H:%M")
         })
     return results
+
+@app.get("/history/{prediction_id}")
+def get_prediction_detail(prediction_id: int, db: Session = Depends(get_db)):
+    prediction = db.query(PredictionModel).filter(PredictionModel.id == prediction_id).first()
+    if not prediction:
+        raise HTTPException(status_code=404, detail="Prediction not found")
+    
+    patient = prediction.patient
+    # Reconstruct the response format used by /predict
+    return {
+        "id": prediction.id,
+        "patient_name": patient.name,
+        "age": patient.age,
+        "gender": patient.gender,
+        "risk_score": prediction.risk_score,
+        "risk_category": prediction.risk_category,
+        "top_contributing_factors": json.loads(prediction.contributions) if isinstance(prediction.contributions, str) else prediction.contributions,
+        "model_type": prediction.model_type,
+        "date": prediction.created_at.strftime("%Y-%m-%d %H:%M")
+    }
 
 @app.get("/")
 def root():

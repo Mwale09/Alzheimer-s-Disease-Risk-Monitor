@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Lock, Bell, Moon, Sun, Monitor, Shield } from 'lucide-react';
 
-const Settings = ({ darkMode, toggleTheme }) => {
+const Settings = ({ darkMode, toggleTheme, userName, setUserName }) => {
     const [notifications, setNotifications] = useState(true);
 
     return (
@@ -23,7 +23,12 @@ const Settings = ({ darkMode, toggleTheme }) => {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Username</label>
-                                <input type="text" value="admin" disabled style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '6px', color: 'var(--text-secondary)' }} />
+                                <input
+                                    type="text"
+                                    value={userName}
+                                    onChange={(e) => setUserName(e.target.value)}
+                                    style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                                />
                             </div>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Role</label>

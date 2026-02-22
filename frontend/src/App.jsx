@@ -24,6 +24,44 @@ import ModelSelection from './components/ModelSelection';
 import Settings from './components/Settings';
 import { getPredictions } from './api';
 
+const ProcessingOverlay = ({ message, progress }) => (
+  <div className="glass-overlay animate-fade-in-up">
+    <div style={{ textAlign: 'center', padding: '40px', width: '100%', maxWidth: '500px' }}>
+      <div style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto 32px' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'var(--primary)', opacity: 0.1, borderRadius: '50%', filter: 'blur(30px)' }}></div>
+        <BrainCircuit size={120} className="animate-pulse" style={{ color: 'var(--primary)', position: 'relative', zIndex: 1 }} />
+      </div>
+      <h2 className="gradient-text-animate" style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '12px' }}>
+        {message || 'Running AI Prediction Models...'}
+      </h2>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', letterSpacing: '0.2em', marginBottom: '32px' }}>
+        SYNTHESIZING GENETIC DATA & NEURAL MAPPING
+      </p>
+
+      {/* Stylish Progress Bar */}
+      <div style={{ position: 'relative', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: `${progress}%`,
+            background: 'linear-gradient(90deg, var(--primary), var(--accent))',
+            boxShadow: '0 0 15px var(--primary)',
+            transition: 'width 0.3s ease-out',
+            borderRadius: '10px'
+          }}
+        />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{progress < 100 ? 'PROCESSING...' : 'COMPLETE'}</span>
+        <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>{progress}%</span>
+      </div>
+    </div>
+  </div>
+);
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -32,15 +70,21 @@ function App() {
   const [preparedPatients, setPreparedPatients] = useState([]);
   const [selectedModel, setSelectedModel] = useState('XGBoost');
   const [darkMode, setDarkMode] = useState(true);
+  const [userName, setUserName] = useState('Dr. User');
+  const [analysisProgress, setAnalysisProgress] = useState(0);
 
   // Persistent Auth & Theme
   useEffect(() => {
-    const savedLogin = localStorage.getItem('isLoggedIn');
-    if (savedLogin === 'true') setIsLoggedIn(true);
-
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') setDarkMode(false);
+
+    const savedName = localStorage.getItem('userName');
+    if (savedName) setUserName(savedName);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('userName', userName);
+  }, [userName]);
 
   useEffect(() => {
     console.log("Current darkMode state:", darkMode);
@@ -55,12 +99,10 @@ function App() {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    localStorage.setItem('isLoggedIn', 'true');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('isLoggedIn');
   };
 
   const toggleTheme = () => {
@@ -143,6 +185,16 @@ function App() {
     setError(null);
     setSelectedResultIndex(0);
     setAnalysisStep('result');
+    setAnalysisProgress(0);
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setAnalysisProgress(prev => {
+        if (prev < 90) return prev + Math.floor(Math.random() * 10) + 1;
+        return prev;
+      });
+    }, 300);
+
     try {
       if (preparedPatients.length > 1) {
         // Batch Prediction
@@ -154,8 +206,35 @@ function App() {
         const data = await getPredictions(preparedPatients[0], modelName);
         setResult([data]); // Store as array for consistency
       }
+      setAnalysisProgress(100);
+      // Wait a bit at 100% for the user to see "COMPLETE"
+      await new Promise(r => setTimeout(r, 800));
     } catch (err) {
       setError('Analysis failed. Please check your connection to the Neuro-Service.');
+    } finally {
+      clearInterval(progressInterval);
+      setLoading(false);
+    }
+  };
+
+  const handleViewHistoryReport = async (reportSummary) => {
+    setLoading(true);
+    setResult(null);
+    setError(null);
+    setSelectedResultIndex(0);
+    setActiveTab('New Analysis'); // Switch to analysis view to show results
+    setAnalysisStep('result');
+
+    try {
+      const { getHistoryDetail } = await import('./api');
+      const detail = await getHistoryDetail(reportSummary.id);
+      if (detail) {
+        setResult([detail]);
+      } else {
+        setError('Failed to load report details.');
+      }
+    } catch (err) {
+      setError('Error retrieving detailed report.');
     } finally {
       setLoading(false);
     }
@@ -237,7 +316,22 @@ function App() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ textAlign: 'right', marginRight: '8px' }}>
-            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Dr. User</p>
+            <input
+              type="text"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              style={{
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                background: 'transparent',
+                border: 'none',
+                textAlign: 'right',
+                width: '100px',
+                outline: 'none',
+                borderBottom: '1px dashed var(--glass-border)'
+              }}
+            />
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Neurologist</p>
           </div>
           <button
@@ -255,22 +349,20 @@ function App() {
         <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '8px', fontWeight: 700 }}>{activeTab}</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Welcome to your Neuro-Command Center</p>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <div className="glass-card" style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--success)', background: 'rgba(16, 185, 129, 0.1)' }}>
-              <ShieldCheck size={18} color="var(--success)" />
-              <span style={{ fontSize: '0.875rem', color: 'var(--success)', fontWeight: 600 }}>System Secure</span>
-            </div>
-          </div>
+
         </header>
 
         {activeTab === 'Dashboard' && (
-          <DashboardContent onStartAnalysis={() => {
-            setActiveTab('New Analysis');
-            setAnalysisMode('selection');
-          }} />
+          <DashboardContent
+            setActiveTab={setActiveTab}
+            onStartAnalysis={() => {
+              setActiveTab('New Analysis');
+              setAnalysisMode('selection');
+            }}
+            onReportClick={handleViewHistoryReport}
+          />
         )}
 
         {activeTab === 'New Analysis' && (
@@ -359,72 +451,49 @@ function App() {
                   setSelectedModel(model);
                   handleRunAnalysis(model);
                 }}
+                onBack={() => setAnalysisStep('preview')}
               />
             )}
 
             {analysisStep === 'result' && (
-              <div style={{ display: 'grid', gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap: '32px', alignItems: 'start' }}>
-                <div className="glass-card" style={{ padding: '32px', textAlign: 'center' }}>
-                  <h2 style={{ marginBottom: '16px' }}>Analysis Progress</h2>
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                    Model: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{selectedModel}</span>
-                  </p>
-
-                  {loading && (
-                    <div style={{ padding: '40px' }}>
-                      <Activity size={48} className="spin" style={{ color: 'var(--primary)', marginBottom: '16px' }} />
-                      <p>Generating Neuro-Explainability Maps...</p>
+              <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }} className="animate-fade-in-up">
+                {/* Progress Summary Header */}
+                <div className="glass-card" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {loading ? <Activity className="spin" color="var(--primary)" /> : <ShieldCheck color="var(--success)" />}
                     </div>
-                  )}
-
-                  {!loading && !error && result && result.length > 0 && (
                     <div>
-                      <ShieldCheck size={48} color="var(--success)" style={{ marginBottom: '16px' }} />
-                      <p style={{ color: 'var(--success)', fontWeight: 600 }}>Analysis Complete</p>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                        Processed {result.length} patient(s)
+                      <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
+                        {loading ? 'Processing Analysis...' : 'Analysis Complete'}
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        Model: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{selectedModel}</span>
                       </p>
+                    </div>
+                  </div>
 
+                  {!loading && !error && result && (
+                    <div style={{ display: 'flex', gap: '12px' }}>
                       {result.length > 1 && (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '24px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '8px' }}>
                           <button
                             onClick={() => setSelectedResultIndex(prev => Math.max(0, prev - 1))}
                             disabled={selectedResultIndex === 0}
-                            style={{
-                              background: 'transparent',
-                              border: '1px solid var(--glass-border)',
-                              color: selectedResultIndex === 0 ? 'var(--text-secondary)' : 'var(--primary)',
-                              padding: '8px',
-                              borderRadius: '8px',
-                              cursor: selectedResultIndex === 0 ? 'default' : 'pointer',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
+                            style={{ background: 'transparent', border: 'none', color: selectedResultIndex === 0 ? 'var(--text-secondary)' : 'var(--primary)', cursor: 'pointer' }}
                           >
                             <ArrowLeft size={16} />
                           </button>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-                            {selectedResultIndex + 1} / {result.length}
-                          </span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{selectedResultIndex + 1} / {result.length}</span>
                           <button
                             onClick={() => setSelectedResultIndex(prev => Math.min(result.length - 1, prev + 1))}
                             disabled={selectedResultIndex === result.length - 1}
-                            style={{
-                              background: 'transparent',
-                              border: '1px solid var(--glass-border)',
-                              color: selectedResultIndex === result.length - 1 ? 'var(--text-secondary)' : 'var(--primary)',
-                              padding: '8px',
-                              borderRadius: '8px',
-                              cursor: selectedResultIndex === result.length - 1 ? 'default' : 'pointer',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
+                            style={{ background: 'transparent', border: 'none', color: selectedResultIndex === result.length - 1 ? 'var(--text-secondary)' : 'var(--primary)', cursor: 'pointer' }}
                           >
                             <ArrowRight size={16} />
                           </button>
                         </div>
                       )}
-
                       <button
                         onClick={() => {
                           setAnalysisStep('entry');
@@ -432,44 +501,27 @@ function App() {
                           setPreparedPatients([]);
                         }}
                         className="btn-primary"
-                        style={{ background: 'transparent', border: '1px solid var(--glass-border)', width: '100%' }}
+                        style={{ padding: '8px 16px', fontSize: '0.85rem', background: 'transparent', border: '1px solid var(--glass-border)' }}
                       >
                         New Analysis
                       </button>
                     </div>
                   )}
-
-                  {error && (
-                    <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: '8px', border: '1px solid var(--danger)' }}>
-                      {error}
-                      <button onClick={() => setAnalysisStep('model_selection')} style={{ display: 'block', margin: '12px auto', background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer' }}>Try Again</button>
-                    </div>
-                  )}
                 </div>
+
+                {error && (
+                  <div style={{ padding: '24px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: '12px', border: '1px solid var(--danger)', textAlign: 'center' }}>
+                    <p style={{ marginBottom: '16px' }}>{error}</p>
+                    <button onClick={() => setAnalysisStep('model_selection')} className="btn-primary">Try Again</button>
+                  </div>
+                )}
+
                 {result && result[selectedResultIndex] && (
-                  <div style={{ animation: 'fade-in 0.5s ease-out' }}>
-                    <div style={{
-                      marginBottom: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '0 8px'
-                    }}>
-                      <div style={{
-                        width: '8px',
-                        height: '24px',
-                        background: 'var(--primary)',
-                        borderRadius: '4px'
-                      }}></div>
-                      <h3 style={{
-                        fontSize: '1.2rem',
-                        margin: 0,
-                        color: 'var(--text-primary)'
-                      }}>
-                        Patient: {result[selectedResultIndex].patient_name}
-                      </h3>
-                    </div>
-                    <ResultCard result={result[selectedResultIndex]} />
+                  <div style={{ animation: 'fade-in-up 0.6s ease-out' }}>
+                    <ResultCard
+                      result={result[selectedResultIndex]}
+                      onBack={() => setAnalysisStep('entry')}
+                    />
                   </div>
                 )}
               </div>
@@ -480,10 +532,17 @@ function App() {
         {activeTab === 'Cohort Analytics' && <AnalyticsDashboard />}
 
         {activeTab === 'Settings' && (
-          <Settings darkMode={darkMode} toggleTheme={toggleTheme} />
+          <Settings darkMode={darkMode} toggleTheme={toggleTheme} userName={userName} setUserName={setUserName} />
         )}
 
       </main>
+
+      {loading && analysisStep !== 'result' && (
+        <ProcessingOverlay
+          message={preparedPatients.length > 1 ? "Analyzing Patient Batch..." : "Analyzing Genotype Data..."}
+          progress={analysisProgress}
+        />
+      )}
     </div>
   );
 }

@@ -39,13 +39,51 @@ const RiskForm = ({ onSubmit, loading }) => {
         }));
     };
 
+    const [error, setError] = useState(null);
+
     const handleSubmit = (e) => {
         e.preventDefault();
+        setError(null);
+
+        // Basic validation
+        if (!formData.name || formData.name.trim() === '') {
+            setError('Patient Name is required.');
+            return;
+        }
+
+        const age = parseInt(formData.age);
+        if (isNaN(age) || age < 0 || age > 150) {
+            setError('Please enter a valid age between 0 and 150.');
+            return;
+        }
+
+        const edu = parseInt(formData.education_level);
+        if (isNaN(edu) || edu < 0 || edu > 50) {
+            setError('Please enter a valid education level (years).');
+            return;
+        }
+
+        // Validate variants
+        for (let i = 0; i < formData.variants.length; i++) {
+            const v = formData.variants[i];
+            const af = parseFloat(v.allele_frequency);
+            if (isNaN(af) || af < 0 || af > 1) {
+                setError(`Variant at row ${i + 1} has an invalid allele frequency. Must be between 0 and 1.`);
+                return;
+            }
+        }
+
         onSubmit(formData);
     };
 
     return (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }} className="fade-in">
+            {error && (
+                <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: '8px', border: '1px solid var(--danger)', fontSize: '0.9rem' }}>
+                    {error}
+                </div>
+            )}
+
             <div className="form-group">
                 <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Patient Name *</label>
                 <input

@@ -64,8 +64,19 @@ const RiskForm = ({ onSubmit, loading }) => {
         }
 
         // Validate variants
+        if (!formData.variants || formData.variants.length === 0) {
+            setError('At least one genetic variant is required for this analysis.');
+            return;
+        }
+
         for (let i = 0; i < formData.variants.length; i++) {
             const v = formData.variants[i];
+
+            if (!v.variant_id || !v.variant_id.trim()) {
+                setError(`Variant at row ${i + 1} is missing an ID.`);
+                return;
+            }
+
             const af = parseFloat(v.allele_frequency);
             if (isNaN(af) || af < 0 || af > 1) {
                 setError(`Variant at row ${i + 1} has an invalid allele frequency. Must be between 0 and 1.`);

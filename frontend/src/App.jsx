@@ -120,16 +120,37 @@ function App() {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Validate file type
+    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+      const msg = 'Invalid file type. Please upload a CSV file.';
+      console.error(msg);
+      setError(msg);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target.result;
       const lines = text.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
 
       console.log("File loaded, rows:", lines.length);
 
+      // Validate required headers
+      const requiredHeaders = ['name', 'age']; // Minimum required for basic processing, can adjust
+      const hasRequiredHeaders = requiredHeaders.every(req => headers.some(h => h.includes(req)));
+
+      if (!hasRequiredHeaders) {
+        const msg = 'Invalid CSV format. Required columns missing (e.g., Name, Age). Please ensure the format matches the system requirements.';
+        console.error(msg);
+        setError(msg);
+        return;
+      }
+
       const csvRows = lines.slice(1);
       const patientsMap = {};
+
+      let validRows = 0;
 
       csvRows.forEach((row, index) => {
         if (!row.trim()) return;
@@ -143,13 +164,22 @@ function App() {
 
         const [name, age, gender, education, familyHistory, variantId, gene, genotype, af] = cols;
 
+        // More validation
+        const parsedAge = parseInt(age);
+        if (isNaN(parsedAge) || parsedAge < 0 || parsedAge > 150) {
+          console.warn(`Row ${index + 2} has invalid age: ${age}`);
+          return;
+        }
+
+        validRows++;
+
         if (!patientsMap[name]) {
           patientsMap[name] = {
             name: name || `Patient ${index + 1}`,
-            age: parseInt(age) || 65,
+            age: parsedAge,
             gender: gender || 'Unknown',
             education_level: parseInt(education) || 12,
-            family_history: familyHistory ? (familyHistory.toLowerCase() === 'true' || familyHistory === '1') : false,
+            family_history: familyHistory ? (familyHistory.toLowerCase() === 'true' || familyHistory === '1' || familyHistory.toLowerCase() === 'yes') : false,
             variants: []
           };
         }
@@ -167,11 +197,12 @@ function App() {
       const parsedPatients = Object.values(patientsMap);
       console.log("Parsed patients:", parsedPatients);
 
-      if (parsedPatients.length > 0) {
+      if (parsedPatients.length > 0 && validRows > 0) {
         setPreparedPatients(parsedPatients);
         setAnalysisStep('preview');
+        setError(null); // Clear any previous errors
       } else {
-        const msg = 'No valid patient data found in CSV. Please ensure the format matches: Name,Age,Gender,Education,FamilyHistory,VariantID,Gene,Genotype,AF';
+        const msg = 'No valid patient data found or all rows were invalid. Please ensure the CSV contains valid Name and Age entries.';
         console.error(msg);
         setError(msg);
       }

@@ -16,6 +16,7 @@ const AnalyticsDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [selectedReport, setSelectedReport] = useState(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
+    const [showHighRiskOnly, setShowHighRiskOnly] = useState(false);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -107,14 +108,27 @@ const AnalyticsDashboard = () => {
                     </div>
                 </div>
 
-                <div className="glass-card" style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}>
+                <div
+                    className="glass-card"
+                    onClick={() => setShowHighRiskOnly(!showHighRiskOnly)}
+                    style={{
+                        padding: '24px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        border: showHighRiskOnly ? '2px solid var(--danger)' : '1px solid var(--glass-border)',
+                        boxShadow: showHighRiskOnly ? '0 0 15px rgba(239, 68, 68, 0.2)' : 'none',
+                        transition: 'all 0.2s ease',
+                        background: showHighRiskOnly ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)'
+                    }}
+                >
                     <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.1 }}>
                         <AlertTriangle size={80} color="var(--danger)" />
                     </div>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '8px' }}>High Risk Identifications</p>
                     <h3 style={{ fontSize: '2.5rem', fontWeight: 700, margin: 0, color: 'var(--danger)' }}>{loading ? '...' : stats.highRiskCount}</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px', color: 'var(--danger)', fontSize: '0.85rem' }}>
-                        Alert levels prioritized
+                        {showHighRiskOnly ? 'Filtering feed...' : 'Click to filter feed'}
                     </div>
                 </div>
 
@@ -228,10 +242,10 @@ const AnalyticsDashboard = () => {
                                 style={{
                                     padding: '8px 12px',
                                     paddingRight: '36px',
-                                    background: 'rgba(255,255,255,0.05)',
+                                    background: 'var(--bg-dark)',
                                     border: '1px solid var(--glass-border)',
                                     borderRadius: '8px',
-                                    color: 'white',
+                                    color: 'var(--text-primary)',
                                     width: '250px',
                                     fontSize: '0.9rem'
                                 }}
@@ -239,7 +253,11 @@ const AnalyticsDashboard = () => {
                             <Activity size={16} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
                         </div>
                         <div style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--glass-border)', fontSize: '0.85rem' }}>
-                            <span style={{ color: 'var(--text-secondary)' }}>Showing:</span> {stats.recentActivity.filter(i => i.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) || i.id.toString().includes(searchTerm)).length} Records
+                            <span style={{ color: 'var(--text-secondary)' }}>Showing:</span> {stats.recentActivity.filter(i => {
+                                const matchesSearch = i.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) || i.id.toString().includes(searchTerm);
+                                const matchesFilter = showHighRiskOnly ? (i.risk === 'High' || i.risk === 'Very High') : true;
+                                return matchesSearch && matchesFilter;
+                            }).length} Records
                         </div>
                     </div>
                 </div>
@@ -268,10 +286,11 @@ const AnalyticsDashboard = () => {
                             <span style={{ textAlign: 'right' }}>Action</span>
                         </div>
                         {stats.recentActivity
-                            .filter(item =>
-                                item.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                item.id.toString().includes(searchTerm)
-                            )
+                            .filter(item => {
+                                const matchesSearch = item.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) || item.id.toString().includes(searchTerm);
+                                const matchesFilter = showHighRiskOnly ? (item.risk === 'High' || item.risk === 'Very High') : true;
+                                return matchesSearch && matchesFilter;
+                            })
                             .map((item, idx) => (
                                 <div key={idx} style={{
                                     display: 'grid',

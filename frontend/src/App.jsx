@@ -202,7 +202,7 @@ function App() {
         setAnalysisStep('preview');
         setError(null); // Clear any previous errors
       } else {
-        const msg = 'No valid patient data found or all rows were invalid. Please ensure the CSV contains valid Name and Age entries.';
+        const msg = 'No valid patient data found. Minimum requirements: Name and Age.';
         console.error(msg);
         setError(msg);
       }
@@ -234,14 +234,17 @@ function App() {
         setResult(results);
       } else {
         // Single Prediction
+        const { getPredictions } = await import('./api');
         const data = await getPredictions(preparedPatients[0], modelName);
         setResult([data]); // Store as array for consistency
       }
       setAnalysisProgress(100);
       // Wait a bit at 100% for the user to see "COMPLETE"
       await new Promise(r => setTimeout(r, 800));
+      setAnalysisStep('result');
     } catch (err) {
       setError('Analysis failed. Please check your connection to the Neuro-Service.');
+      setAnalysisStep('entry'); // Fallback on error
     } finally {
       clearInterval(progressInterval);
       setLoading(false);
@@ -318,6 +321,7 @@ function App() {
                   setAnalysisStep('entry');
                   setAnalysisMode('selection');
                   setResult(null);
+                  setError(null);
                   setPreparedPatients([]);
                 }
               }}
@@ -430,12 +434,21 @@ function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
                       <h2 style={{ margin: 0 }}>Upload Genotype Data</h2>
                       <button
-                        onClick={() => setAnalysisMode('selection')}
+                        onClick={() => {
+                          setAnalysisMode('selection');
+                          setError(null);
+                        }}
                         style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.875rem' }}
                       >
                         ← Back to Options
                       </button>
                     </div>
+
+                    {error && (
+                      <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: '8px', border: '1px solid var(--danger)', fontSize: '0.9rem', marginBottom: '24px', textAlign: 'left' }}>
+                        {error}
+                      </div>
+                    )}
 
                     <input
                       type="file"
@@ -472,17 +485,7 @@ function App() {
               <PatientPreview
                 patients={preparedPatients}
                 onBack={() => setAnalysisStep('entry')}
-                onProceed={() => setAnalysisStep('model_selection')}
-              />
-            )}
-
-            {analysisStep === 'model_selection' && (
-              <ModelSelection
-                onSelect={(model) => {
-                  setSelectedModel(model);
-                  handleRunAnalysis(model);
-                }}
-                onBack={() => setAnalysisStep('preview')}
+                onProceed={() => handleRunAnalysis('XGBoost')}
               />
             )}
 
@@ -568,7 +571,7 @@ function App() {
 
       </main>
 
-      {loading && analysisStep !== 'result' && (
+      {loading && (
         <ProcessingOverlay
           message={preparedPatients.length > 1 ? "Analyzing Patient Batch..." : "Analyzing Genotype Data..."}
           progress={analysisProgress}

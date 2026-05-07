@@ -1,5 +1,21 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    is_active: bool
+
+    class Config:
+        from_attributes = True
 
 class GeneticVariant(BaseModel):
     variant_id: str
@@ -26,6 +42,7 @@ class PredictionResponse(BaseModel):
     risk_category: str # "Low", "Moderate", "High"
     shap_values: dict # Feature name -> SHAP value
     top_contributing_factors: List[dict]
+    model_metrics: Optional[dict] = None
 
 class BatchPredictionRequest(BaseModel):
     patients: List[PatientData]

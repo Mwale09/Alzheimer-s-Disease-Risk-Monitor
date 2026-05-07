@@ -97,12 +97,19 @@ function App() {
     }
   }, [darkMode]);
 
-  const handleLogin = () => {
+  const handleLogin = (name) => {
+    if (name) {
+      setUserName(name);
+      localStorage.setItem('userName', name);
+    }
     setIsLoggedIn(true);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    import('./api').then(apiModule => {
+      if (apiModule.logoutUser) apiModule.logoutUser();
+    });
   };
 
   const toggleTheme = () => {

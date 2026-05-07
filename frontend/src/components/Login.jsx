@@ -1,16 +1,31 @@
 import React, { useState } from 'react';
 import { BrainCircuit, Lock, User, ArrowRight } from 'lucide-react';
+import { login, registerUser } from '../api';
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (username === 'admin' && password === 'password') {
-            onLogin();
-        } else {
-            alert('Invalid credentials (Try admin/password)');
+        setErrorMsg('');
+        setLoading(true);
+        try {
+            if (isRegistering) {
+                await registerUser(username, password);
+                await login(username, password);
+                onLogin(username);
+            } else {
+                await login(username, password);
+                onLogin(username);
+            }
+        } catch (error) {
+            setErrorMsg(error.response?.data?.detail || 'Authentication failed. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -37,7 +52,15 @@ const Login = ({ onLogin }) => {
                 </div>
 
                 <h1 style={{ fontSize: '1.75rem', marginBottom: '8px' }}>AD Predictor</h1>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Enter credentials to access AD Predictor</p>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>
+                    {isRegistering ? 'Create anomalous dataset profile' : 'Enter credentials to access System'}
+                </p>
+
+                {errorMsg && (
+                    <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)', padding: '12px', color: 'var(--danger)', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem' }}>
+                        {errorMsg}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ position: 'relative' }}>
@@ -61,8 +84,16 @@ const Login = ({ onLogin }) => {
                         />
                     </div>
 
-                    <button type="submit" className="btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px' }}>
-                        Sign In <ArrowRight size={18} />
+                    <button type="submit" disabled={loading} className="btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', opacity: loading ? 0.7 : 1 }}>
+                        {loading ? 'Processing...' : (isRegistering ? 'Register' : 'Sign In')} <ArrowRight size={18} />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => { setIsRegistering(!isRegistering); setErrorMsg(''); }}
+                        style={{ marginTop: '8px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}
+                    >
+                        {isRegistering ? 'Already have an account? Sign In' : 'Need an account? Register'}
                     </button>
                 </form>
 

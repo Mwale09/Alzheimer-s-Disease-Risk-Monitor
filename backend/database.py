@@ -13,6 +13,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 class Patient(Base):
     __tablename__ = "patients"
 
@@ -44,6 +53,7 @@ class Prediction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     model_type = Column(String) # RF, XGB, DNN, SVM
     risk_score = Column(Float)
     risk_category = Column(String)
@@ -51,6 +61,7 @@ class Prediction(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     patient = relationship("Patient", back_populates="predictions")
+    user = relationship("User", backref="predictions")
 
 def init_db():
     Base.metadata.create_all(bind=engine)

@@ -57,6 +57,14 @@ class RiskPredictor:
         )
         self.model.fit(X, y)
         
+        from sklearn.metrics import accuracy_score, precision_score, recall_score
+        y_pred = self.model.predict(X)
+        self.metrics = {
+            "Accuracy": f"{accuracy_score(y, y_pred)*100:.1f}%",
+            "Precision": f"{precision_score(y, y_pred)*100:.1f}%",
+            "Recall":   f"{recall_score(y, y_pred)*100:.1f}%"
+        }
+        
         # Initialize SHAP explainer
         try:
             # For newer XGBoost, passing the booster directly often works better with TreeExplainer
@@ -74,7 +82,7 @@ class RiskPredictor:
 
     def predict(self, patient_data, model_type="XGBoost"):
         if not self.model:
-            return 0.0, "Error: Model not loaded", {}, []
+            return 0.0, "Error: Model not loaded", {}, [], {}
 
         # Check for APOE4 in variants
         apoe4_count = 0
@@ -133,7 +141,7 @@ class RiskPredictor:
                     val = float(sv[i])
                     contributions.append({
                         "feature": feature,
-                        "value": float(input_data.iloc[0][i]),
+                        "value": float(input_data.iloc[0, i]),
                         "shap_value": val
                     })
             except Exception as e:
@@ -149,7 +157,7 @@ class RiskPredictor:
         else:
             category = "Very High"
 
-        return risk_score, category, shap_dict, contributions
+        return risk_score, category, shap_dict, contributions, getattr(self, "metrics", {})
 
 
 predictor = RiskPredictor()

@@ -144,10 +144,10 @@ const DashboardContent = ({ onStartAnalysis, onReportClick, setActiveTab }) => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             style={{
                                 padding: '8px 12px',
-                                background: 'rgba(255,255,255,0.05)',
+                                background: 'var(--bg-dark)',
                                 border: '1px solid var(--glass-border)',
                                 borderRadius: '8px',
-                                color: 'white',
+                                color: 'var(--text-primary)',
                                 width: '250px'
                             }}
                         />

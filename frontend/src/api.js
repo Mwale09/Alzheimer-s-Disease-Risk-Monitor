@@ -99,4 +99,9 @@ export const getHistoryDetail = async (id) => {
   }
 };
 
+export const updatePassword = async (new_password) => {
+  const response = await api.post('/update-password', { new_password });
+  return response.data;
+};
+
 export default api;

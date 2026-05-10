@@ -50,3 +50,5 @@ class BatchPredictionRequest(BaseModel):
 
 class BatchPredictionResponse(BaseModel):
     results: List[PredictionResponse]
+class PasswordUpdate(BaseModel):
+    new_password: str

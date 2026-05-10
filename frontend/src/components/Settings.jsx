@@ -1,8 +1,41 @@
 import React, { useState } from 'react';
-import { User, Lock, Bell, Moon, Sun, Monitor, Shield } from 'lucide-react';
+import { User, Lock, Bell, Moon, Sun, Monitor, Shield, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { updatePassword } from '../api';
 
 const Settings = ({ darkMode, toggleTheme, userName, setUserName }) => {
     const [notifications, setNotifications] = useState(true);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState({ type: '', message: '' });
+
+    const handleUpdatePassword = async () => {
+        if (!newPassword || !confirmPassword) {
+            setStatus({ type: 'error', message: 'Please fill in both password fields.' });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setStatus({ type: 'error', message: 'Passwords do not match.' });
+            return;
+        }
+        if (newPassword.length < 6) {
+            setStatus({ type: 'error', message: 'Password must be at least 6 characters.' });
+            return;
+        }
+
+        setLoading(true);
+        setStatus({ type: '', message: '' });
+        try {
+            await updatePassword(newPassword);
+            setStatus({ type: 'success', message: 'Password updated successfully!' });
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (error) {
+            setStatus({ type: 'error', message: error.response?.data?.detail || 'Failed to update password.' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="glass-card" style={{ padding: '40px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
@@ -52,15 +85,60 @@ const Settings = ({ darkMode, toggleTheme, userName, setUserName }) => {
                         <Lock size={20} color="var(--warning)" /> Security
                     </h3>
                     <div className="glass-card" style={{ padding: '24px', background: 'rgba(255,255,255,0.02)' }}>
+                        {status.message && (
+                            <div style={{
+                                padding: '12px',
+                                borderRadius: '8px',
+                                marginBottom: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                background: status.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                color: status.type === 'success' ? 'var(--success)' : 'var(--danger)',
+                                border: `1px solid ${status.type === 'success' ? 'var(--success)' : 'var(--danger)'}`,
+                                fontSize: '0.875rem'
+                            }}>
+                                {status.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                {status.message}
+                            </div>
+                        )}
                         <div style={{ marginBottom: '16px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>New Password</label>
-                            <input type="password" placeholder="Enter new password" style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '6px', color: 'white' }} />
+                            <input
+                                type="password"
+                                placeholder="Enter new password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '6px', color: 'white' }}
+                            />
                         </div>
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Confirm Password</label>
-                            <input type="password" placeholder="Confirm new password" style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '6px', color: 'white' }} />
+                            <input
+                                type="password"
+                                placeholder="Confirm new password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '6px', color: 'white' }}
+                            />
                         </div>
-                        <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.875rem' }}>Update Password</button>
+                        <button
+                            className="btn-primary"
+                            onClick={handleUpdatePassword}
+                            disabled={loading}
+                            style={{
+                                padding: '8px 16px',
+                                fontSize: '0.875rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                opacity: loading ? 0.7 : 1,
+                                cursor: loading ? 'not-allowed' : 'pointer'
+                            }}
+                        >
+                            {loading && <Loader2 size={16} className="spin" />}
+                            {loading ? 'Updating...' : 'Update Password'}
+                        </button>
                     </div>
                 </section>
 

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
-from schemas import PredictionRequest, PredictionResponse, BatchPredictionRequest, BatchPredictionResponse, UserCreate, UserResponse, Token
+from schemas import PredictionRequest, PredictionResponse, BatchPredictionRequest, BatchPredictionResponse, UserCreate, UserResponse, Token, PasswordUpdate
 from ml_service import predictor
 from database import SessionLocal, engine, init_db, get_db, Patient, GeneticVariant, Prediction as PredictionModel, User
 from auth import get_current_user, get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -158,6 +158,13 @@ def get_prediction_detail(prediction_id: int, db: Session = Depends(get_db), cur
         "model_type": prediction.model_type,
         "date": prediction.created_at.strftime("%Y-%m-%d %H:%M")
     }
+
+@app.post("/update-password")
+def update_password(update_data: PasswordUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    hashed_password = get_password_hash(update_data.new_password)
+    current_user.hashed_password = hashed_password
+    db.commit()
+    return {"message": "Password updated successfully"}
 
 @app.get("/")
 def root():

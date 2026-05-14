@@ -169,7 +169,7 @@ function App() {
           return;
         }
 
-        const [name, age, gender, education, familyHistory, variantId, gene, genotype, af] = cols;
+        const [name, age, gender, education, genotype, af, snpId, riskAllele, gene, pval, riskFreq, beta] = cols;
 
         // More validation
         const parsedAge = parseInt(age);
@@ -186,17 +186,21 @@ function App() {
             age: parsedAge,
             gender: gender || 'Unknown',
             education_level: parseInt(education) || 12,
-            family_history: familyHistory ? (familyHistory.toLowerCase() === 'true' || familyHistory === '1' || familyHistory.toLowerCase() === 'yes') : false,
+            family_history: false,
             variants: []
           };
         }
 
-        if (variantId || gene) {
+        if (snpId || gene) {
           patientsMap[name].variants.push({
-            variant_id: variantId || 'N/A',
+            snp_id: snpId || 'N/A',
             gene: gene || 'N/A',
             genotype: genotype || 'N/A',
-            allele_frequency: parseFloat(af) || 0.0
+            risk_allele: riskAllele || 'N/A',
+            allele_frequency: parseFloat(af) || 0.0,
+            pvalue: parseFloat(pval) || 0.0,
+            risk_frequency: parseFloat(riskFreq) || 0.0,
+            beta: parseFloat(beta) || 0.0
           });
         }
       });

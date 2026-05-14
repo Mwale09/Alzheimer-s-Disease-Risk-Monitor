@@ -15,9 +15,9 @@ const PatientPreview = ({ patients, onBack, onProceed }) => {
     const [processingStep, setProcessingStep] = React.useState(0);
 
     React.useEffect(() => {
-        const timer1 = setTimeout(() => setProcessingStep(1), 800);
-        const timer2 = setTimeout(() => setProcessingStep(2), 1600);
-        const timer3 = setTimeout(() => setProcessingStep(3), 2400);
+        const timer1 = setTimeout(() => setProcessingStep(1), 3000);
+        const timer2 = setTimeout(() => setProcessingStep(2), 6000);
+        const timer3 = setTimeout(() => setProcessingStep(3), 9000);
         return () => { clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3); };
     }, []);
 
@@ -59,10 +59,14 @@ const PatientPreview = ({ patients, onBack, onProceed }) => {
                             <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Name</th>
                             <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Age</th>
                             <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Gender</th>
-                            <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Variant ID</th>
+                            <th style={{ padding: '16px', color: 'var(--text-primary)' }}>SNP ID</th>
                             <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Gene</th>
                             <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Genotype</th>
+                            <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Risk Allele</th>
                             <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Allele Freq</th>
+                            <th style={{ padding: '16px', color: 'var(--text-primary)' }}>P-value</th>
+                            <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Risk Freq</th>
+                            <th style={{ padding: '16px', color: 'var(--text-primary)' }}>Beta</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,10 +81,14 @@ const PatientPreview = ({ patients, onBack, onProceed }) => {
                                                 <td style={{ padding: '16px' }} rowSpan={p.variants.length}>{p.gender}</td>
                                             </>
                                         )}
-                                        <td style={{ padding: '16px' }}>{v.variant_id}</td>
+                                        <td style={{ padding: '16px' }}>{v.snp_id}</td>
                                         <td style={{ padding: '16px', color: 'var(--success)', fontWeight: 600 }}>{v.gene}</td>
                                         <td style={{ padding: '16px' }}>{v.genotype}</td>
+                                        <td style={{ padding: '16px' }}>{v.risk_allele || 'N/A'}</td>
                                         <td style={{ padding: '16px' }}>{v.allele_frequency}</td>
+                                        <td style={{ padding: '16px' }}>{v.pvalue}</td>
+                                        <td style={{ padding: '16px' }}>{v.risk_frequency}</td>
+                                        <td style={{ padding: '16px' }}>{v.beta}</td>
                                     </tr>
                                 ))}
                             </React.Fragment>
@@ -118,7 +126,7 @@ const PatientPreview = ({ patients, onBack, onProceed }) => {
                             </span>
                         </div>
                         <div style={{ height: '6px', background: processingStep >= 1 ? 'var(--success)' : 'var(--glass-border)', borderRadius: '3px', opacity: processingStep >= 1 ? 0.3 : 0.1, overflow: 'hidden', position: 'relative' }}>
-                            {processingStep < 1 && <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '30%', background: 'var(--primary)', animation: 'slide 1s infinite' }} />}
+                            {processingStep < 1 && <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '30%', background: 'var(--primary)', animation: 'slide 3s infinite ease-in-out' }} />}
                         </div>
                     </div>
                     <div style={{ flex: 1, minWidth: '250px' }}>
@@ -129,7 +137,7 @@ const PatientPreview = ({ patients, onBack, onProceed }) => {
                             </span>
                         </div>
                         <div style={{ height: '6px', background: processingStep >= 2 ? 'var(--success)' : 'var(--glass-border)', borderRadius: '3px', opacity: processingStep >= 2 ? 0.3 : 0.1, overflow: 'hidden', position: 'relative' }}>
-                            {processingStep === 1 && <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '30%', background: 'var(--primary)', animation: 'slide 1s infinite' }} />}
+                            {processingStep === 1 && <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '30%', background: 'var(--primary)', animation: 'slide 3s infinite ease-in-out' }} />}
                         </div>
                     </div>
                     <div style={{ flex: 1, minWidth: '250px' }}>
@@ -140,7 +148,7 @@ const PatientPreview = ({ patients, onBack, onProceed }) => {
                             </span>
                         </div>
                         <div style={{ height: '6px', background: processingStep >= 3 ? 'var(--success)' : 'var(--glass-border)', borderRadius: '3px', opacity: processingStep >= 3 ? 0.3 : 0.1, overflow: 'hidden', position: 'relative' }}>
-                            {processingStep === 2 && <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '30%', background: 'var(--primary)', animation: 'slide 1s infinite' }} />}
+                            {processingStep === 2 && <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '30%', background: 'var(--primary)', animation: 'slide 3s infinite ease-in-out' }} />}
                         </div>
                     </div>
                 </div>

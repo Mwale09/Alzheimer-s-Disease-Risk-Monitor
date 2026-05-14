@@ -91,10 +91,14 @@ def run_single_prediction(data, model_type, db, current_user_id=None):
         for v in data.variants:
             db_variant = GeneticVariant(
                 patient_id=db_patient.id,
-                variant_id=v.variant_id,
+                snp_id=v.snp_id,
                 gene=v.gene,
                 genotype=v.genotype,
-                allele_frequency=v.allele_frequency
+                allele_frequency=v.allele_frequency,
+                risk_allele=v.risk_allele,
+                pvalue=v.pvalue,
+                risk_frequency=v.risk_frequency,
+                beta=v.beta
             )
             db.add(db_variant)
         

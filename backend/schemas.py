@@ -18,10 +18,14 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 class GeneticVariant(BaseModel):
-    variant_id: str
+    snp_id: str
     gene: str
     genotype: str
     allele_frequency: float
+    risk_allele: str = ""
+    pvalue: float = 0.0
+    risk_frequency: float = 0.0
+    beta: float = 0.0
 
 class PatientData(BaseModel):
     name: str = "Anonymous"

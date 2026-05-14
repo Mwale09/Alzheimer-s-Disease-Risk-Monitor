@@ -11,11 +11,11 @@ def test_prediction():
         education_level=12,
         family_history=True,
         variants=[
-            GeneticVariant(variant_id="rs429358", gene="APOE", genotype="e4/e4", allele_frequency=0.15)
+            GeneticVariant(snp_id="rs429358", gene="APOE", genotype="e4/e4", allele_frequency=0.15)
         ]
     )
     
-    score, cat, shap_d, contribs = predictor.predict(data_high)
+    score, cat, shap_d, contribs = predictor.predict(data_high.dict())
     print(f"High Risk Case: Score={score:.2f}, Category={cat}")
     assert score > 0.5, "Expected high score for high risk inputs"
     assert cat in ["Moderate", "High"]
@@ -27,11 +27,11 @@ def test_prediction():
         education_level=16,
         family_history=False,
         variants=[
-            GeneticVariant(variant_id="rs429358", gene="APOE", genotype="e3/e3", allele_frequency=0.15)
+            GeneticVariant(snp_id="rs429358", gene="APOE", genotype="e3/e3", allele_frequency=0.15)
         ]
     )
     
-    score, cat, shap_d, contribs = predictor.predict(data_low)
+    score, cat, shap_d, contribs = predictor.predict(data_low.dict())
     print(f"Low Risk Case: Score={score:.2f}, Category={cat}")
     assert score < 0.5, "Expected low score for low risk inputs"
     

@@ -41,10 +41,14 @@ class GeneticVariant(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"))
-    variant_id = Column(String)
+    snp_id = Column(String)
     gene = Column(String)
     genotype = Column(String)
     allele_frequency = Column(Float)
+    risk_allele = Column(String)
+    pvalue = Column(Float)
+    risk_frequency = Column(Float)
+    beta = Column(Float)
 
     patient = relationship("Patient", back_populates="variants")
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 const RiskForm = ({ onSubmit, loading }) => {
     const [formData, setFormData] = useState({
@@ -7,35 +7,21 @@ const RiskForm = ({ onSubmit, loading }) => {
         age: 65,
         gender: 'Male',
         education_level: 12,
-        family_history: false,
-        variants: [{ variant_id: 'rs429358', gene: 'APOE', genotype: 'e4/e4', allele_frequency: 0.14 }]
+        genotype: 'e4/e4',
+        allele_frequency: 0.14,
+        snp_id: 'rs429358',
+        risk_allele: 'C',
+        gene: 'APOE',
+        pvalue: 0.001,
+        risk_frequency: 0.12,
+        beta: 1.2
     });
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : (type === 'number' ? parseInt(value) : value)
-        }));
-    };
-
-    const handleVariantChange = (index, field, value) => {
-        const newVariants = [...formData.variants];
-        newVariants[index][field] = field === 'allele_frequency' ? parseFloat(value) : value;
-        setFormData(prev => ({ ...prev, variants: newVariants }));
-    };
-
-    const addVariant = () => {
-        setFormData(prev => ({
-            ...prev,
-            variants: [...prev.variants, { variant_id: `V-00${prev.variants.length + 1} `, gene: '', genotype: '', allele_frequency: 0.0 }]
-        }));
-    };
-
-    const removeVariant = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            variants: prev.variants.filter((_, i) => i !== index)
+            [name]: value
         }));
     };
 
@@ -57,45 +43,46 @@ const RiskForm = ({ onSubmit, loading }) => {
             return;
         }
 
-        const edu = parseInt(formData.education_level);
-        if (isNaN(edu) || edu < 0 || edu > 50) {
-            setError('Please enter a valid education level (years).');
+        if (!formData.snp_id || formData.snp_id.trim() === '') {
+            setError('SNP ID is required.');
             return;
         }
 
-        // Validate variants
-        if (!formData.variants || formData.variants.length === 0) {
-            setError('At least one genetic variant is required for this analysis.');
-            return;
-        }
+        // Map to backend schema
+        const payload = {
+            name: formData.name,
+            age: age,
+            gender: formData.gender,
+            education_level: parseInt(formData.education_level) || 0,
+            family_history: false, // Legacy field fallback
+            variants: [{
+                snp_id: formData.snp_id,
+                gene: formData.gene,
+                genotype: formData.genotype,
+                allele_frequency: parseFloat(formData.allele_frequency) || 0.0,
+                risk_allele: formData.risk_allele,
+                pvalue: parseFloat(formData.pvalue) || 0.0,
+                risk_frequency: parseFloat(formData.risk_frequency) || 0.0,
+                beta: parseFloat(formData.beta) || 0.0
+            }]
+        };
 
-        for (let i = 0; i < formData.variants.length; i++) {
-            const v = formData.variants[i];
-
-            if (!v.variant_id || !v.variant_id.trim()) {
-                setError(`Variant at row ${i + 1} is missing an ID.`);
-                return;
-            }
-
-            if (!v.gene || !v.gene.trim()) {
-                setError(`Variant at row ${i + 1} is missing a Gene.`);
-                return;
-            }
-
-            if (!v.genotype || !v.genotype.trim()) {
-                setError(`Variant at row ${i + 1} is missing a Genotype.`);
-                return;
-            }
-
-            const af = parseFloat(v.allele_frequency);
-            if (isNaN(af) || af < 0 || af > 1) {
-                setError(`Variant at row ${i + 1} has an invalid allele frequency. Must be between 0 and 1.`);
-                return;
-            }
-        }
-
-        onSubmit(formData);
+        onSubmit(payload);
     };
+
+    const renderInput = (label, name, type = "text", step = null) => (
+        <div className="form-group">
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{label}</label>
+            <input
+                type={type}
+                name={name}
+                step={step}
+                value={formData[name]}
+                onChange={handleChange}
+                style={{ width: '100%', padding: '12px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-primary)', opacity: 0.8 }}
+            />
+        </div>
+    );
 
     return (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }} className="fade-in">
@@ -105,29 +92,12 @@ const RiskForm = ({ onSubmit, loading }) => {
                 </div>
             )}
 
-            <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Patient Name *</label>
-                <input
-                    type="text"
-                    name="name"
-                    placeholder="e.g., John Smith"
-                    value={formData.name}
-                    onChange={handleChange}
-                    style={{ width: '100%', padding: '12px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-primary)', opacity: 0.8 }}
-                />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                {renderInput('Patient Name', 'name')}
+                {renderInput('Age', 'age', 'number')}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div className="form-group">
-                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Age</label>
-                    <input
-                        type="number"
-                        name="age"
-                        value={formData.age}
-                        onChange={handleChange}
-                        style={{ width: '100%', padding: '12px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-primary)', opacity: 0.8 }}
-                    />
-                </div>
                 <div className="form-group">
                     <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Gender</label>
                     <select
@@ -141,52 +111,27 @@ const RiskForm = ({ onSubmit, loading }) => {
                         <option value="Other">Other</option>
                     </select>
                 </div>
+                {renderInput('Education Level (Years)', 'education_level', 'number')}
+            </div>
+
+            <hr style={{ borderTop: '1px solid var(--glass-border)', margin: '8px 0' }} />
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '-8px' }}>Genomic Profile</h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                {renderInput('SNP ID', 'snp_id')}
+                {renderInput('Gene', 'gene')}
+                {renderInput('Genotype', 'genotype')}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                {renderInput('Risk Allele', 'risk_allele')}
+                {renderInput('Allele Frequency', 'allele_frequency', 'number', '0.01')}
+                {renderInput('Risk Frequency', 'risk_frequency', 'number', '0.01')}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div className="form-group">
-                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Education Level (Years)</label>
-                    <input
-                        type="number"
-                        name="education_level"
-                        value={formData.education_level}
-                        onChange={handleChange}
-                        style={{ width: '100%', padding: '12px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-primary)', opacity: 0.8 }}
-                    />
-                </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '28px' }}>
-                    <input
-                        type="checkbox"
-                        name="family_history"
-                        checked={formData.family_history}
-                        onChange={handleChange}
-                        style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                    />
-                    <label style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Family History of Alzheimer's</label>
-                </div>
-            </div>
-
-            <div style={{ marginTop: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>Genetic Variants</h3>
-                    <button
-                        type="button"
-                        onClick={addVariant}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid var(--primary)', borderRadius: '6px', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.875rem' }}
-                    >
-                        <Plus size={16} /> Add Variant
-                    </button>
-                </div>
-
-                {formData.variants.map((v, index) => (
-                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 40px', gap: '12px', marginBottom: '12px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-                        <input placeholder="ID" value={v.variant_id} onChange={(e) => handleVariantChange(index, 'variant_id', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px' }} />
-                        <input placeholder="Gene" value={v.gene} onChange={(e) => handleVariantChange(index, 'gene', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px' }} />
-                        <input placeholder="Genotype" value={v.genotype} onChange={(e) => handleVariantChange(index, 'genotype', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px' }} />
-                        <input type="number" step="0.01" placeholder="Freq" value={v.allele_frequency} onChange={(e) => handleVariantChange(index, 'allele_frequency', e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '4px' }} />
-                        <button type="button" onClick={() => removeVariant(index)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={18} /></button>
-                    </div>
-                ))}
+                {renderInput('P-Value', 'pvalue', 'number', 'any')}
+                {renderInput('Beta', 'beta', 'number', '0.01')}
             </div>
 
             <button

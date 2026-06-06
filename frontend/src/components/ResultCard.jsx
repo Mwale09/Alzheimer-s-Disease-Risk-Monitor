@@ -115,16 +115,7 @@ const ResultCard = ({ result, onBack }) => {
                 </div>
             </div>
 
-            {model_metrics && Object.keys(model_metrics).length > 0 && (
-                <div className="glass-card" style={{ padding: '24px', background: 'linear-gradient(135deg, var(--primary), var(--accent))', color: 'white', display: 'flex', justifyContent: 'space-around', borderRadius: '12px' }}>
-                    {Object.entries(model_metrics).map(([key, val]) => (
-                        <div key={key} style={{ textAlign: 'center' }}>
-                            <h4 style={{ margin: 0, opacity: 0.9, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{key}</h4>
-                            <p style={{ margin: '8px 0 0', fontSize: '1.5rem', fontWeight: 800 }}>{val}</p>
-                        </div>
-                    ))}
-                </div>
-            )}
+
 
             <div className="glass-card" style={{ padding: '24px' }}>
                 <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>

@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, TrendingUp, FileText, Shield, Zap, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import { Activity, TrendingUp, FileText, Shield, Zap, ArrowRight, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { getHistory } from '../api';
 
 const DashboardContent = ({ onStartAnalysis, onReportClick, setActiveTab }) => {
     const [stats, setStats] = useState({
         total: 0,
         avgRisk: '--',
+        highRiskCount: 0,
         recent: 0
     });
     const [rawHistory, setRawHistory] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAll, setShowAll] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [showHighRiskOnly, setShowHighRiskOnly] = useState(false);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -21,6 +23,7 @@ const DashboardContent = ({ onStartAnalysis, onReportClick, setActiveTab }) => {
                     const sortedHistory = [...history].sort((a, b) => (b.id || 0) - (a.id || 0));
                     setRawHistory(sortedHistory);
                     const total = history.length;
+                    const highRiskCount = history.filter(h => h.risk === 'High' || h.risk === 'Very High').length;
                     // Calculate average risk from scores (formatted as percentage strings like "71.1%")
                     const avg = (history.reduce((acc, curr) => {
                         const score = parseFloat(curr.score);
@@ -30,6 +33,7 @@ const DashboardContent = ({ onStartAnalysis, onReportClick, setActiveTab }) => {
                     setStats({
                         total,
                         avgRisk: avg,
+                        highRiskCount,
                         recent: total // Total reports available
                     });
                 }
@@ -42,9 +46,11 @@ const DashboardContent = ({ onStartAnalysis, onReportClick, setActiveTab }) => {
         fetchStats();
     }, []);
 
-    const filteredHistory = rawHistory.filter(h =>
-        h.patient_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredHistory = rawHistory.filter(h => {
+        const matchesSearch = h.patient_name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesHighRisk = showHighRiskOnly ? (h.risk === 'High' || h.risk === 'Very High') : true;
+        return matchesSearch && matchesHighRisk;
+    });
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }} className="fade-in">
@@ -127,6 +133,40 @@ const DashboardContent = ({ onStartAnalysis, onReportClick, setActiveTab }) => {
                         </p>
                     </div>
 
+                    <div 
+                        className="glass-card" 
+                        onClick={() => setShowHighRiskOnly(!showHighRiskOnly)}
+                        style={{
+                            padding: '24px',
+                            borderLeft: '3px solid var(--danger)',
+                            cursor: 'pointer',
+                            border: showHighRiskOnly ? '2px solid var(--danger)' : '1px solid var(--glass-border)',
+                            background: showHighRiskOnly ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)',
+                            boxShadow: showHighRiskOnly ? '0 0 15px rgba(239, 68, 68, 0.2)' : 'none',
+                            transition: 'all 0.2s ease',
+                        }}
+                    >
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            marginBottom: '8px'
+                        }}>
+                            <AlertTriangle size={24} color="var(--danger)" />
+                            <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                High Risk Patients
+                            </h3>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--danger)', margin: 0 }}>
+                                {loading ? <Loader2 className="spin" size={24} /> : stats.highRiskCount}
+                            </p>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--danger)', opacity: 0.8, fontWeight: 500 }}>
+                                {showHighRiskOnly ? 'Filtering Active' : 'Click to Filter'}
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
             </section>
 
@@ -136,7 +176,7 @@ const DashboardContent = ({ onStartAnalysis, onReportClick, setActiveTab }) => {
                     <h2 style={{ fontSize: '1.3rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
                         Recent Patient Reports
                     </h2>
-                    <div style={{ position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <input
                             type="text"
                             placeholder="Search patients..."
@@ -148,9 +188,31 @@ const DashboardContent = ({ onStartAnalysis, onReportClick, setActiveTab }) => {
                                 border: '1px solid var(--glass-border)',
                                 borderRadius: '8px',
                                 color: 'var(--text-primary)',
-                                width: '250px'
+                                width: '250px',
+                                outline: 'none'
                             }}
                         />
+                        <button
+                            onClick={() => setShowHighRiskOnly(!showHighRiskOnly)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid ' + (showHighRiskOnly ? 'var(--danger)' : 'var(--glass-border)'),
+                                background: showHighRiskOnly ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                                color: showHighRiskOnly ? 'var(--danger)' : 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                outline: 'none'
+                            }}
+                        >
+                            <AlertTriangle size={16} color={showHighRiskOnly ? 'var(--danger)' : 'var(--text-secondary)'} />
+                            {showHighRiskOnly ? 'Show All' : 'High Risk Only'}
+                        </button>
                     </div>
                 </div>
 

@@ -247,11 +247,33 @@ const AnalyticsDashboard = () => {
                                     borderRadius: '8px',
                                     color: 'var(--text-primary)',
                                     width: '250px',
-                                    fontSize: '0.9rem'
+                                    fontSize: '0.9rem',
+                                    outline: 'none'
                                 }}
                             />
                             <Activity size={16} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
                         </div>
+                        <button
+                            onClick={() => setShowHighRiskOnly(!showHighRiskOnly)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid ' + (showHighRiskOnly ? 'var(--danger)' : 'var(--glass-border)'),
+                                background: showHighRiskOnly ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                                color: showHighRiskOnly ? 'var(--danger)' : 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                outline: 'none'
+                            }}
+                        >
+                            <AlertTriangle size={16} color={showHighRiskOnly ? 'var(--danger)' : 'var(--text-secondary)'} />
+                            {showHighRiskOnly ? 'Show All' : 'High Risk Only'}
+                        </button>
                         <div style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--glass-border)', fontSize: '0.85rem' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Showing:</span> {stats.recentActivity.filter(i => {
                                 const matchesSearch = i.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) || i.id.toString().includes(searchTerm);
